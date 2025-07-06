@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TrendBazaar AI Admin</title>
+  <style>
+    body{font-family:sans-serif;margin:0;padding:0;background:#f9f9f9;color:#222}
+    header,footer{padding:12px;text-align:center;background:#4e54c8;color:#fff;}
+    .container{max-width:800px;margin:20px auto;padding:0 10px;}
+    textarea#aiChat{width:100%;height:90px;padding:12px;font-size:16px;}
+    button#sendBtn{padding:10px 16px;margin-top:8px;font-size:16px;background:#4e54c8;color:#fff;border:none;border-radius:4px;cursor:pointer;}
+    #aiResponse{margin-top:12px;padding:10px;background:#e0e0e0;border-radius:4px;white-space:pre-wrap;}
+  </style>
+</head>
+<body>
+  <header><h2>TrendBazaar AI Admin Panel</h2></header>
+  <div class="container">
+    <textarea id="aiChat" placeholder="मन की बात लिखो..." autofocus></textarea><br>
+    <button id="sendBtn">Send</button>
+    <div id="aiResponse">🔊 Ready to assist you!</div>
+  </div>
+  <footer>© 2025 TrendBazaar</footer>
+
+  <script>
+    // Data storage for posts and stats
+    let posts = JSON.parse(localStorage.getItem('posts')||'[]');
+    let stats = JSON.parse(localStorage.getItem('stats')||'{}');
+
+    function saveAll(){
+      localStorage.setItem('posts', JSON.stringify(posts));
+      localStorage.setItem('stats', JSON.stringify(stats));
+    }
+
+    function generateExcerpt(text){ return text.substring(0,150)+"…"; }
+    function randomImageFor(title){
+      return `https://source.unsplash.com/400x200/?${encodeURIComponent(title.split(' ').slice(0,3).join(' '))}`;
+    }
+
+    function processCommand(cmdRaw){
+      const aiChat = document.getElementById('aiChat');
+      const aiResponse = document.getElementById('aiResponse');
+      const cmd = cmdRaw.trim();
+
+      // Blog generation
+      if(cmd.toLowerCase().startsWith('blog likhkar upload karo')){
+        const parts = cmdRaw.split('affiliate link:');
+        if(parts.length<2) return aiResponse.innerText = '⚠️ कृपया ब्लॉग और affiliate link दोनों लिखें।';
+        const titleText = parts[0].replace(/blog likhkar upload karo[:\- ]*/i, '').trim();
+        const linkText = parts[1].trim();
+        if(!titleText||!linkText) return aiResponse.innerText = '⚠️ Title या affiliate link missing है।';
+
+        const id = Date.now().toString();
+        const content = `<h2>${titleText}</h2><p>यह ब्लॉग ${titleText} पर आधारित है, जो एक बेहतरीन उत्पाद है। विवरण, फायदे, और विशेषज्ञ सुझाव भी शामिल हैं।</p><p><a href="${linkText}" target="_blank" rel="noopener">🛒 अभी खरीदें</a></p>`;
+        const imgUrl = randomImageFor(titleText);
+
+        posts.push({
+          id, title: titleText, excerpt: generateExcerpt(content),
+          content, affiliate: linkText, img: imgUrl
+        });
+        stats[id] = {views:0, clicks:0};
+        saveAll();
+
+        aiResponse.innerText = `✅ Blog "${titleText}" generate & upload हो गया है! Affiliate link set की गई।`;
+        return;
+      }
+
+      // Header color
+      if(cmd.match(/header.*(color|rang|background).*(laal|lal|neela|blue|hara|green|peela|yellow|dark blue)/i)){
+        const map = {laal:'red',lal:'red',neela:'blue',blue:'blue',hara:'green',green:'green',peela:'yellow',yellow:'yellow', 'dark blue':'darkblue'};
+        for(let k in map) if(cmd.toLowerCase().includes(k)){
+          document.querySelector('header').style.background = map[k];
+          return aiResponse.innerText = `✅ Header का रंग ${map[k]} कर दिया गया है।`;
+        }
+      }
+
+      // Footer update
+      if(cmd.toLowerCase().includes('footer')){
+        const yr=cmd.match(/\b20\d{2}\b/);
+        if(yr){
+          document.querySelector('footer').innerHTML = `© ${yr[0]} TrendBazaar`;
+          return aiResponse.innerText = `✅ Footer में ©${yr[0]} डाल दिया गया है।`;
+        }
+        if(cmd.toLowerCase().includes('instagram')){
+          document.querySelector('footer').innerHTML += ` <a href="https://instagram.com/trendbazaar" target="_blank">📸 Instagram</a>`;
+          return aiResponse.innerText = '✅ Footer में Instagram link जोड़ दिया गया।';
+        }
+      }
+
+      // Dark/Light mode
+      if(cmd.toLowerCase().includes('dark mode')){
+        document.body.style.background='#121212'; document.body.style.color='#eee';
+        return aiResponse.innerText = '✅ Dark mode on कर दिया है।';
+      }
+      if(cmd.toLowerCase().includes('light mode')){
+        document.body.style.background=''; document.body.style.color='';
+        return aiResponse.innerText = '✅ Light mode wapas कर दिया गया है।';
+      }
+
+      // Suggestions
+      if(cmd.toLowerCase().includes('suggest') || cmd.toLowerCase().includes('idea')){
+        return aiResponse.innerText = `💡 Suggestion: आप चाहें तो:\n- Newsletter signup form add करें\n- Contact form जोड़ें\n- Trending deals section लगाएं\n- Testimonials जोड़ें`;
+      }
+
+      aiResponse.innerText = '❓ माफ़ करें, मैं समझ नहीं पाया — कृपया try करें।';
+    }
+
+    document.getElementById('sendBtn').onclick = () => {
+      processCommand(document.getElementById('aiChat').value);
+      document.getElementById('aiChat').value = '';
+    };
+  </script>
+</body>
+</html>
